@@ -1,67 +1,49 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Business, LeadStatus, MessageLog } from "../types.ts";
+import { Business, LeadStatus } from "../types.ts";
 
 export const geminiService = {
   /**
-   * Autonomous Agent: Drives the conversation toward a meeting/sale.
+   * Sales Agent AI: This is YOUR agent. It only speaks for you.
+   * It analyzes the conversation and automatically sends the next best move.
    */
   generateAgentResponse: async (business: Business, incomingMessage?: string): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || (window as any).manualKey });
 
     const conversationHistory = business.history
-      .map(m => `${m.role === 'agent' ? 'You' : 'Client'}: ${m.content}`)
+      .map(m => `${m.role === 'agent' ? 'Sales Agent' : 'Manager'}: ${m.content}`)
       .join('\n');
 
-    const prompt = `You are a high-performance autonomous Sales Agent.
-    Business: ${business.name} (${business.city})
-    Objective: Secure a "Discovery Call" to build them a new website.
-    Price Target: $2,500 USD.
-    Timeline: 10 days.
+    const prompt = `You are an expert Sales Assistant working for a web agency.
+    Business Name: ${business.name}
+    Business Location: ${business.city}
+    Current Status: ${business.status}
 
     Conversation History:
-    ${conversationHistory || "None (Initial outreach)"}
+    ${conversationHistory || "No messages sent yet."}
 
-    ${incomingMessage ? `LATEST CLIENT REPLY: "${incomingMessage}"` : ""}
+    ${incomingMessage ? `THE MANAGER JUST REPLIED: "${incomingMessage}"` : "This is the initial outreach."}
 
-    GOAL: 
-    - If initial, offer a modern upgrade.
-    - If they ask about price/time, give the $2500/10-day figures confidently.
-    - If they seem interested, suggest a specific time for a "Discovery Call" tomorrow at 10:00 AM.
-    - KEEP IT SHORT (max 35 words).`;
+    GOAL:
+    1. If this is the FIRST message, offer to upgrade their website/SEO for their ${business.city} business.
+    2. If the manager is asking about price, stick to $2,500 with a 10-day turnaround.
+    3. If they are interested, suggest a Discovery Call tomorrow at 10 AM.
+    4. Be professional, high-end, and extremely concise (max 30 words).
+    5. NEVER speak as the manager. Only as the agent.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-pro-preview',
       contents: prompt,
     });
 
-    return response.text?.trim() || "Let's schedule a call to discuss your new website.";
-  },
-
-  /**
-   * Simulates the business owner replying to the AI agent.
-   */
-  simulateClientReply: async (business: Business): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || (window as any).manualKey });
-
-    const prompt = `You are a local business owner named ${business.name}. 
-    You just received an outreach message about a new website. 
-    Respond with a short message asking about the cost, or saying "Okay, tomorrow works for a call." 
-    Be realistic and busy. Under 12 words.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: prompt,
-    });
-
-    return response.text?.trim() || "Sounds interesting. How much does it cost?";
+    return response.text?.trim() || "Hi, I'd love to discuss upgrading your website. Do you have 10 minutes tomorrow?";
   },
 
   scanLocalBusinesses: async (city: string, keyword: string): Promise<Business[]> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || (window as any).manualKey });
     
-    const prompt = `Find 5 local businesses in ${city} for "${keyword}" that have poor or no websites.
-    Format:
+    const prompt = `Find 5 local businesses in ${city} for "${keyword}" that need better websites.
+    Format exactly like this:
     NAME: [Name]
     PHONE: [Phone]
     URL: [Website or None]
