@@ -16,9 +16,12 @@ const colorMap: Record<string, { bg: string, text: string }> = {
 export const Stats: React.FC<StatsProps> = ({ leads }) => {
   const today = new Date().setHours(0, 0, 0, 0);
   const foundToday = leads.filter(l => l.timestamp >= today).length;
-  const hotLeads = leads.filter(l => l.status === LeadStatus.HOT).length;
-  const warmLeads = leads.filter(l => l.status === LeadStatus.WARM).length;
-  const messagesGenerated = leads.filter(l => l.message).length;
+  // Fix: Replaced non-existent LeadStatus.HOT with LeadStatus.NEGOTIATING
+  const hotLeads = leads.filter(l => l.status === LeadStatus.NEGOTIATING).length;
+  // Fix: Replaced non-existent LeadStatus.WARM with LeadStatus.CONTACTED
+  const warmLeads = leads.filter(l => l.status === LeadStatus.CONTACTED).length;
+  // Fix: Property 'message' does not exist on Business, checking history length instead
+  const messagesGenerated = leads.filter(l => l.history.length > 0).length;
 
   const cards = [
     { label: 'Total Found Today', value: foundToday, icon: 'fa-search', color: 'blue' },

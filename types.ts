@@ -1,8 +1,17 @@
 
 export enum LeadStatus {
-  HOT = 'HOT',     // No website
-  WARM = 'WARM',   // Bad/Old website
-  COLD = 'COLD'    // Good website
+  DISCOVERED = 'DISCOVERED',
+  CONTACTING = 'CONTACTING',
+  CONTACTED = 'CONTACTED',
+  NEGOTIATING = 'NEGOTIATING',
+  CONVERTED = 'CONVERTED',
+  REJECTED = 'REJECTED'
+}
+
+export interface MessageLog {
+  role: 'agent' | 'client';
+  content: string;
+  timestamp: number;
 }
 
 export interface Business {
@@ -11,9 +20,9 @@ export interface Business {
   city: string;
   phone: string;
   website: string | null;
-  mapsUrl?: string; // Grounding requirement: store Google Maps URL
+  mapsUrl?: string;
   status: LeadStatus;
-  message?: string;
+  history: MessageLog[];
   timestamp: number;
 }
 
