@@ -4,88 +4,71 @@ import { Business, LeadStatus } from "../types.ts";
 
 export const geminiService = {
   /**
-   * Scan for local businesses using Google Maps Grounding.
+   * Scan for local businesses using Google Search Grounding.
+   * This resolves the "googleMaps parameter not supported" error while providing live data.
    */
   scanLocalBusinesses: async (city: string, keyword: string): Promise<Business[]> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    let toolConfig = undefined;
-    try {
-      const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 5000 });
-      });
-      toolConfig = {
-        retrievalConfig: {
-          latLng: {
-            latitude: pos.coords.latitude,
-            longitude: pos.coords.longitude
-          }
-        }
-      };
-    } catch (e) {
-      console.debug("Geolocation not available or denied", e);
-    }
-
-    const prompt = `Find 5 local businesses in ${city} for the category "${keyword}". 
-    For each business, provide:
-    1. Name
-    2. Phone number
-    3. Official website URL (if they have one, otherwise "None")
-    4. Assessment: Does the website look modern or outdated? (If no website, say "None").
+    // We use a specific prompt format to ensure we can parse the results manually
+    const prompt = `Find 5 currently active local businesses in ${city} for the category "${keyword}". 
+    For each business, provide these exact fields:
+    - NAME: [Business Name]
+    - PHONE: [Phone Number]
+    - URL: [Website URL or "None"]
+    - INFO: [Short assessment of their website quality - modern, old, or none]
     
-    Format the output as a clear list where each business entry starts with "BUSINESS_ENTRY:".`;
+    Separate each business entry with the marker "---NEXT_BUSINESS---".`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3-flash-preview",
       contents: prompt,
       config: {
-        tools: [{ googleMaps: {} }],
-        toolConfig,
+        tools: [{ googleSearch: {} }],
+        // Note: responseMimeType: "application/json" is often incompatible with grounding tools
       }
     });
 
+    // Extract search grounding metadata for compliance
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-    const mapsUrls = groundingChunks
-      .filter((chunk: any) => chunk.maps?.uri)
-      .map((chunk: any) => chunk.maps.uri);
+    const searchLinks = groundingChunks
+      .filter((chunk: any) => chunk.web?.uri)
+      .map((chunk: any) => chunk.web.uri);
 
     try {
       const text = response.text || "";
-      const sections = text.split(/BUSINESS_ENTRY:/i).filter(s => s.trim().length > 10);
+      // Split the text into individual business segments
+      const entries = text.split("---NEXT_BUSINESS---").filter(e => e.trim().length > 20);
       
-      return sections.map((section, index): Business => {
-        const nameMatch = section.match(/(?:Name|BUSINESS_ENTRY):\s*(.*)/i);
-        const name = nameMatch ? nameMatch[1].replace(/^[\d.\s*-]+/, '').trim() : "Unknown Business";
-        
-        const phoneMatch = section.match(/Phone:\s*(.*)/i);
-        const phone = phoneMatch ? phoneMatch[1].trim() : "N/A";
-        
-        const websiteMatch = section.match(/Website:\s*(.*)/i);
-        const websiteText = websiteMatch ? websiteMatch[1].trim() : "None";
-        
-        const assessmentMatch = section.match(/Assessment:\s*(.*)/i);
-        const assessment = assessmentMatch ? assessmentMatch[1].trim() : "";
+      return entries.map((entry, index): Business => {
+        const name = entry.match(/NAME:\s*(.*)/i)?.[1]?.trim() || "Unknown Business";
+        const phone = entry.match(/PHONE:\s*(.*)/i)?.[1]?.trim() || "N/A";
+        const websiteText = entry.match(/URL:\s*(.*)/i)?.[1]?.trim() || "None";
+        const info = entry.match(/INFO:\s*(.*)/i)?.[1]?.trim() || "";
 
         let status = LeadStatus.COLD;
-        if (!websiteText || websiteText.toLowerCase() === "none" || websiteText.toLowerCase() === "null") {
+        const normalizedWeb = websiteText.toLowerCase();
+        
+        if (normalizedWeb === "none" || normalizedWeb === "" || normalizedWeb.includes("n/a")) {
           status = LeadStatus.HOT;
-        } else if (assessment.toLowerCase().includes("outdated") || assessment.toLowerCase().includes("bad") || assessment.toLowerCase().includes("old")) {
+        } else if (info.toLowerCase().includes("old") || info.toLowerCase().includes("outdated") || info.toLowerCase().includes("poor")) {
           status = LeadStatus.WARM;
         }
 
         return {
           id: Math.random().toString(36).substring(2, 9),
-          name,
+          name: name.replace(/^[\d.\s*-]+/, ''), // Clean leading numbers/bullets
           city,
           phone,
-          website: (websiteText.toLowerCase() === "none" || websiteText === "") ? null : websiteText,
-          mapsUrl: mapsUrls[index] || undefined,
+          website: status === LeadStatus.HOT ? null : websiteText,
+          // Use search links as the mapsUrl equivalent for source verification
+          mapsUrl: searchLinks[index] || searchLinks[0] || undefined,
           status,
           timestamp: Date.now()
         };
       });
     } catch (e) {
-      console.error("Failed to parse Gemini response", e);
+      console.error("Failed to parse Gemini Search response", e);
       return [];
     }
   },
@@ -96,18 +79,18 @@ export const geminiService = {
   generateMessage: async (business: Business): Promise<string> => {
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    const prompt = `Generate a short, professional, and highly converting outreach message for a local business owner.
-    Business Name: ${business.name}
-    City: ${business.city}
-    Lead Status: ${business.status} (HOT = No website, WARM = Needs improvement)
+    const prompt = `Generate a short, professional outreach message for a business owner.
+    Business: ${business.name} in ${business.city}
+    Context: ${business.status === LeadStatus.HOT ? 'They have no website' : 'Their website looks outdated'}
     
-    Rule: Keep it under 60 words. Mention how a better web presence can bring more local customers. Do not include subject lines, just the message body.`;
+    Goal: Offer to build a modern, high-converting website to help them get more local customers.
+    Constraint: Under 50 words. Professional and friendly. No subject line.`;
 
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: prompt,
     });
 
-    return response.text?.trim() || "Hi, I noticed your business could benefit from a new website. Let's chat!";
+    return response.text?.trim() || "Hi, I noticed your business could benefit from a modern website. Let's chat!";
   }
 };

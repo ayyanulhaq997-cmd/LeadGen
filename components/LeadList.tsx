@@ -28,7 +28,7 @@ export const LeadList: React.FC<LeadListProps> = ({ leads, onGenerateMessage, is
             <tr className="bg-slate-50 border-b border-slate-200">
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Business Info</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Contact</th>
-              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Website / Maps</th>
+              <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Online Presence</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Action</th>
             </tr>
@@ -65,8 +65,8 @@ export const LeadList: React.FC<LeadListProps> = ({ leads, onGenerateMessage, is
                     )}
                     {lead.mapsUrl && (
                       <a href={lead.mapsUrl} target="_blank" rel="noreferrer" className="text-[10px] text-slate-500 hover:text-blue-600 flex items-center gap-1 mt-1 transition-colors">
-                        <i className="fa-solid fa-map-location-dot"></i>
-                        View on Google Maps
+                        <i className="fa-solid fa-globe"></i>
+                        View Search Source
                       </a>
                     )}
                   </td>
