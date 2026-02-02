@@ -7,6 +7,10 @@
   <title>LeadGen AI Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    // Shim for process.env which is expected by some SDKs but not native to browsers
+    window.process = window.process || { env: {} };
+  </script>
   <script type="importmap">
 {
   "imports": {

@@ -16,6 +16,11 @@ declare global {
   interface Window {
     // Fixed: Added optional modifier to match potential environment definitions and avoid "identical modifiers" error.
     aistudio?: AIStudio;
+    process?: {
+      env: {
+        [key: string]: string | undefined;
+      }
+    }
   }
 }
 
@@ -34,8 +39,8 @@ const App: React.FC = () => {
       if (window.aistudio) {
         try {
           const hasKey = await window.aistudio.hasSelectedApiKey();
-          if (!hasKey) {
-            setError("Please select a paid API key to access high-performance features like Google Maps grounding.");
+          if (!hasKey && (!window.process?.env?.API_KEY)) {
+            setError("No API Key detected. Please use the 'Key Settings' button to select a valid key from a paid project.");
           }
         } catch (e) {
           console.error("Failed to check API key status", e);
@@ -47,9 +52,11 @@ const App: React.FC = () => {
 
   const handleEntityNotFoundError = async () => {
     if (window.aistudio) {
-      setError("The requested model or feature requires a specific API key. Please select a valid key from a paid project.");
+      setError("An API Key is required. Please select a valid key from a paid project in the dialog.");
       await window.aistudio.openSelectKey();
       setError(null);
+    } else {
+      setError("API Key missing. Please ensure API_KEY environment variable is set or use a compatible environment.");
     }
   };
 
@@ -67,7 +74,13 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       const errorMessage = err?.message || JSON.stringify(err);
-      if (errorMessage.includes("Requested entity was not found") || errorMessage.includes("404")) {
+      
+      // Specifically check for API Key missing errors from the SDK
+      if (
+        errorMessage.includes("Requested entity was not found") || 
+        errorMessage.includes("404") || 
+        errorMessage.includes("API Key must be set")
+      ) {
         await handleEntityNotFoundError();
       } else {
         setError(`Failed to scan: ${errorMessage}`);
@@ -89,7 +102,11 @@ const App: React.FC = () => {
     } catch (err: any) {
       console.error(err);
       const errorMessage = err?.message || JSON.stringify(err);
-      if (errorMessage.includes("Requested entity was not found") || errorMessage.includes("404")) {
+      if (
+        errorMessage.includes("Requested entity was not found") || 
+        errorMessage.includes("404") || 
+        errorMessage.includes("API Key must be set")
+      ) {
         await handleEntityNotFoundError();
       } else {
         alert("Failed to generate AI message.");
@@ -110,6 +127,8 @@ const App: React.FC = () => {
     if (window.aistudio) {
       await window.aistudio.openSelectKey();
       setError(null);
+    } else {
+      alert("Key selection is only available in supported AI Studio or compatible environments.");
     }
   };
 
@@ -165,7 +184,7 @@ const App: React.FC = () => {
             <i className="fa-solid fa-circle-exclamation text-red-400 mt-1"></i>
             <div className="flex-1">
               <p className="text-red-700 text-sm font-medium">{error}</p>
-              {error.includes("key") && (
+              {window.aistudio && (
                  <button onClick={triggerKeySelection} className="mt-2 text-xs font-bold text-red-700 underline">Select API Key Now</button>
               )}
             </div>
@@ -199,10 +218,10 @@ const App: React.FC = () => {
             System Status: {isScanning ? 'Scanning...' : 'Idle'}
           </div>
           <div className="hidden sm:block">
-            Grounding: Google Maps & Search Enabled
+            Grounding: Google Search Enabled
           </div>
           <div>
-            API: {process.env.API_KEY ? 'Authenticated' : 'Key Required'}
+            API: {window.process?.env?.API_KEY ? 'Env Var Detected' : 'Requires Setup'}
           </div>
         </div>
       </footer>
