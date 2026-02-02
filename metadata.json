@@ -1,0 +1,7 @@
+{
+  "name": "LeadGen AI - Local Business Prospector",
+  "description": "An automated SaaS prototype that finds local businesses using Google Maps, analyzes their online presence, and generates AI-driven outreach messages to convert hot leads into clients.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
