@@ -16,15 +16,15 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onScan, isLoading }) => 
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-slate-900 p-8 rounded-3xl border border-white/5 mb-8 flex flex-col md:flex-row gap-6 items-end shadow-2xl">
+    <form onSubmit={handleSubmit} className="bg-slate-900/50 p-10 rounded-[2.5rem] border border-white/5 mb-8 flex flex-col md:flex-row gap-8 items-end shadow-2xl backdrop-blur-md transition-all hover:border-white/10">
       <div className="flex-1 w-full group">
-        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Target Geographic Sector</label>
+        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Target Sector Geography</label>
         <div className="relative">
-          <i className="fa-solid fa-location-crosshairs absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-hover:text-blue-500 transition-colors"></i>
+          <i className="fa-solid fa-location-crosshairs absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-500 transition-colors"></i>
           <input
             type="text"
-            placeholder="e.g. New York"
-            className="w-full pl-12 pr-4 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-slate-800 outline-none transition-all font-bold text-sm"
+            placeholder="Search City (e.g. London)"
+            className="w-full pl-14 pr-6 py-5 bg-slate-800/40 border border-white/5 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-slate-800 outline-none transition-all font-black text-sm text-white placeholder:text-slate-600"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             disabled={isLoading}
@@ -32,13 +32,13 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onScan, isLoading }) => 
         </div>
       </div>
       <div className="flex-1 w-full group">
-        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Vertical / Keyword</label>
+        <label className="block text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-4">Market Vertical</label>
         <div className="relative">
-          <i className="fa-solid fa-radar absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 group-hover:text-blue-500 transition-colors"></i>
+          <i className="fa-solid fa-radar absolute left-5 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-blue-500 transition-colors"></i>
           <input
             type="text"
-            placeholder="e.g. Roofers"
-            className="w-full pl-12 pr-4 py-4 bg-slate-800/50 border border-white/5 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-slate-800 outline-none transition-all font-bold text-sm"
+            placeholder="e.g. Boutique Hotels"
+            className="w-full pl-14 pr-6 py-5 bg-slate-800/40 border border-white/5 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:bg-slate-800 outline-none transition-all font-black text-sm text-white placeholder:text-slate-600"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             disabled={isLoading}
@@ -48,14 +48,14 @@ export const SearchForm: React.FC<SearchFormProps> = ({ onScan, isLoading }) => 
       <button
         type="submit"
         disabled={isLoading || !city || !keyword}
-        className="w-full md:w-auto px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-widest text-xs rounded-2xl shadow-xl shadow-blue-900/30 transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-3"
+        className="w-full md:w-auto px-12 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl shadow-[0_15px_30px_-10px_rgba(37,99,235,0.4)] transition-all disabled:opacity-20 disabled:cursor-not-allowed flex items-center justify-center gap-4 active:scale-95"
       >
         {isLoading ? (
-          <i className="fa-solid fa-dna animate-spin"></i>
+          <i className="fa-solid fa-circle-notch animate-spin text-sm"></i>
         ) : (
-          <i className="fa-solid fa-bolt"></i>
+          <i className="fa-solid fa-bolt text-sm"></i>
         )}
-        Initialize Campaign
+        Launch Campaign
       </button>
     </form>
   );

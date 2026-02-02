@@ -22,6 +22,9 @@ export interface Meeting {
   date: string;
   time: string;
   type: 'Discovery Call' | 'Project Kickoff' | 'Design Review';
+  status: 'upcoming' | 'completed' | 'cancelled';
+  notes?: string;
+  contactPhone?: string;
 }
 
 export interface Business {
@@ -35,4 +38,5 @@ export interface Business {
   history: MessageLog[];
   timestamp: number;
   meetingId?: string;
+  projectValue?: number;
 }
