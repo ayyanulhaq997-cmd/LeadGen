@@ -1,13 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { Stats } from './components/Stats';
-import { SearchForm } from './components/SearchForm';
-import { LeadList } from './components/LeadList';
-import { storageService } from './services/storageService';
-import { geminiService } from './services/geminiService';
-import { Business } from './types';
+import { Stats } from './components/Stats.tsx';
+import { SearchForm } from './components/SearchForm.tsx';
+import { LeadList } from './components/LeadList.tsx';
+import { storageService } from './services/storageService.ts';
+import { geminiService } from './services/geminiService.ts';
+import { Business } from './types.ts';
 
-// Fixing TypeScript error: All declarations of 'aistudio' must have identical modifiers.
 // Using the expected AIStudio type to align with global environment definitions.
 declare global {
   interface AIStudio {
@@ -15,7 +14,8 @@ declare global {
     openSelectKey: () => Promise<void>;
   }
   interface Window {
-    aistudio: AIStudio;
+    // Fixed: Added optional modifier to match potential environment definitions and avoid "identical modifiers" error.
+    aistudio?: AIStudio;
   }
 }
 
@@ -45,15 +45,10 @@ const App: React.FC = () => {
     checkApiKey();
   }, []);
 
-  /**
-   * Handles 404/Entity Not Found errors by prompting the user to select a valid key.
-   * Adheres to the guideline: reset selection state and prompt via openSelectKey().
-   */
   const handleEntityNotFoundError = async () => {
     if (window.aistudio) {
       setError("The requested model or feature requires a specific API key. Please select a valid key from a paid project.");
       await window.aistudio.openSelectKey();
-      // CRITICAL: Assume selection was successful after triggering the dialog to avoid race conditions.
       setError(null);
     }
   };
@@ -148,7 +143,7 @@ const App: React.FC = () => {
                 <i className="fa-solid fa-trash-can"></i>
               </button>
               <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden">
-                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="User" />
+                <img src={`https://ui-avatars.com/api/?name=User&background=random`} alt="User" />
               </div>
             </div>
           </div>
@@ -198,7 +193,7 @@ const App: React.FC = () => {
 
       {/* Footer / Status bar */}
       <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-3 px-8 z-50">
-        <div className="max-w-7xl auto flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
+        <div className="max-w-7xl mx-auto flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-slate-400">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isScanning ? 'bg-amber-400 animate-pulse' : 'bg-green-400'}`}></div>
             System Status: {isScanning ? 'Scanning...' : 'Idle'}

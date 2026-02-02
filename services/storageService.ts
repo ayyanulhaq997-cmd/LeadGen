@@ -1,5 +1,5 @@
 
-import { Business } from '../types';
+import { Business } from '../types.ts';
 
 const STORAGE_KEY = 'leadgen_ai_leads';
 
@@ -12,7 +12,6 @@ export const storageService = {
   saveLeads: (newLeads: Business[]): void => {
     const existing = storageService.getLeads();
     const combined = [...newLeads, ...existing];
-    // Simple deduplication by ID or name+city
     const unique = Array.from(new Map(combined.map(item => [`${item.name}-${item.city}`, item])).values());
     localStorage.setItem(STORAGE_KEY, JSON.stringify(unique));
   },

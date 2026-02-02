@@ -1,12 +1,11 @@
 
 import React from 'react';
-import { Business, LeadStatus } from '../types';
+import { Business, LeadStatus } from '../types.ts';
 
 interface StatsProps {
   leads: Business[];
 }
 
-// Mapping colors to specific Tailwind classes to avoid dynamic string interpolation issues
 const colorMap: Record<string, { bg: string, text: string }> = {
   blue: { bg: 'bg-blue-100', text: 'text-blue-600' },
   orange: { bg: 'bg-orange-100', text: 'text-orange-600' },

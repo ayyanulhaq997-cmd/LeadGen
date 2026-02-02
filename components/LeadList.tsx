@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Business, LeadStatus } from '../types';
+import { Business, LeadStatus } from '../types.ts';
 
 interface LeadListProps {
   leads: Business[];

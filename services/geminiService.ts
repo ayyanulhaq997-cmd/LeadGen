@@ -1,17 +1,14 @@
 
 import { GoogleGenAI } from "@google/genai";
-import { Business, LeadStatus } from "../types";
+import { Business, LeadStatus } from "../types.ts";
 
 export const geminiService = {
   /**
    * Scan for local businesses using Google Maps Grounding.
-   * Maps grounding requires Gemini 2.5 series models and strictly prohibits responseSchema/MimeType.
    */
   scanLocalBusinesses: async (city: string, keyword: string): Promise<Business[]> => {
-    // Create instance inside the method to get the latest process.env.API_KEY
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     
-    // Attempt to get user location for better Maps grounding results as per toolConfig guidelines
     let toolConfig = undefined;
     try {
       const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
@@ -44,11 +41,9 @@ export const geminiService = {
       config: {
         tools: [{ googleMaps: {} }],
         toolConfig,
-        // CRITICAL: responseMimeType and responseSchema are NOT supported when using the googleMaps tool.
       }
     });
 
-    // Extract grounding chunks for Maps URLs as required by the guidelines
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const mapsUrls = groundingChunks
       .filter((chunk: any) => chunk.maps?.uri)
@@ -56,13 +51,9 @@ export const geminiService = {
 
     try {
       const text = response.text || "";
-      // Manual parsing for Markdown text since JSON mode is disabled for googleMaps
       const sections = text.split(/BUSINESS_ENTRY:/i).filter(s => s.trim().length > 10);
       
       return sections.map((section, index): Business => {
-        const lines = section.split('\n').map(l => l.trim());
-        
-        // Simple regex-based extraction for robustness against Markdown formatting
         const nameMatch = section.match(/(?:Name|BUSINESS_ENTRY):\s*(.*)/i);
         const name = nameMatch ? nameMatch[1].replace(/^[\d.\s*-]+/, '').trim() : "Unknown Business";
         
@@ -87,9 +78,7 @@ export const geminiService = {
           name,
           city,
           phone,
-          // Use the official website or fallback to null
           website: (websiteText.toLowerCase() === "none" || websiteText === "") ? null : websiteText,
-          // Store the Maps URL from grounding metadata
           mapsUrl: mapsUrls[index] || undefined,
           status,
           timestamp: Date.now()
