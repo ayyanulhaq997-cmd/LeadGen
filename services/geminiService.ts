@@ -2,15 +2,20 @@
 import { GoogleGenAI } from "@google/genai";
 import { Business, LeadStatus } from "../types.ts";
 
+const getApiKey = () => {
+  return (window as any).process?.env?.API_KEY || "";
+};
+
 export const geminiService = {
   /**
    * Scan for local businesses using Google Search Grounding.
-   * This resolves the "googleMaps parameter not supported" error while providing live data.
    */
   scanLocalBusinesses: async (city: string, keyword: string): Promise<Business[]> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("API Key must be set");
     
-    // We use a specific prompt format to ensure we can parse the results manually
+    const ai = new GoogleGenAI({ apiKey });
+    
     const prompt = `Find 5 currently active local businesses in ${city} for the category "${keyword}". 
     For each business, provide these exact fields:
     - NAME: [Business Name]
@@ -25,11 +30,9 @@ export const geminiService = {
       contents: prompt,
       config: {
         tools: [{ googleSearch: {} }],
-        // Note: responseMimeType: "application/json" is often incompatible with grounding tools
       }
     });
 
-    // Extract search grounding metadata for compliance
     const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
     const searchLinks = groundingChunks
       .filter((chunk: any) => chunk.web?.uri)
@@ -37,7 +40,6 @@ export const geminiService = {
 
     try {
       const text = response.text || "";
-      // Split the text into individual business segments
       const entries = text.split("---NEXT_BUSINESS---").filter(e => e.trim().length > 20);
       
       return entries.map((entry, index): Business => {
@@ -57,11 +59,10 @@ export const geminiService = {
 
         return {
           id: Math.random().toString(36).substring(2, 9),
-          name: name.replace(/^[\d.\s*-]+/, ''), // Clean leading numbers/bullets
+          name: name.replace(/^[\d.\s*-]+/, ''),
           city,
           phone,
-          website: status === LeadStatus.HOT ? null : websiteText,
-          // Use search links as the mapsUrl equivalent for source verification
+          website: (status === LeadStatus.HOT || normalizedWeb === "none") ? null : websiteText,
           mapsUrl: searchLinks[index] || searchLinks[0] || undefined,
           status,
           timestamp: Date.now()
@@ -77,7 +78,10 @@ export const geminiService = {
    * Generate a personalized outreach message using Gemini 3 Flash.
    */
   generateMessage: async (business: Business): Promise<string> => {
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const apiKey = getApiKey();
+    if (!apiKey) throw new Error("API Key must be set");
+
+    const ai = new GoogleGenAI({ apiKey });
     
     const prompt = `Generate a short, professional outreach message for a business owner.
     Business: ${business.name} in ${business.city}
